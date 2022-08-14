@@ -1,0 +1,39 @@
+---
+k3s_version: v1.23.4+k3s1
+ansible_user: serveradmin
+systemd_dir: /etc/systemd/system
+
+# set your timezone
+system_timezone: "Your/Timezone"
+
+# change these to your liking, the only required ones are --no-deploy servicelb and --no-depoly traefik (this playbook deploys traefik)
+# -----------------------
+# 7-24-2022: added additional args for prometheus monitoring following Tim's tutorial on that, If you don't plan to do monitoring they can be removed
+# "--kube-controller-manager-arg bind-address=0.0.0.0 --kube-proxy-arg metrics-bind-address=0.0.0.0 --kube-scheduler-arg bind-address=0.0.0.0 --etcd-expose-metrics true --kubelet-arg containerd=/run/k3s/containerd/containerd.sock"
+extra_server_args: "--no-deploy servicelb --no-deploy traefik --write-kubeconfig-mode 644"
+
+# image tag for metal lb
+metal_lb_speaker_tag_version: "v0.12.1"
+metal_lb_controller_tag_version: "v0.12.1"
+
+# metallb ip range for load balancer
+metal_lb_ip_range: "192.168.10.40-192.168.10.50"
+
+#install traefik?
+deploy_traefik: true
+
+#first IP from above metalLB range which will be used by traefik
+#--IMPORTANT-- This IP NEEDS to be contained in the above pool provided to metalLB.  Usually I use the first one in that range
+traefik_endpoint_ip: "192.168.10.40"
+
+#set this in your local DNS server (ie. Pihole, or pfsense, etc.) pointing to the IP from the line just above.
+traefik_dash_dns_name: "traefik.yourdomain.lan"
+
+#install rancher?
+deploy_rancher: true
+
+#rancher dns name
+rancher_dns_name: "rancher.yourdomain.lan"
+
+#version of cert-manager to deploy
+cert_manager_ver: "v1.7.1"

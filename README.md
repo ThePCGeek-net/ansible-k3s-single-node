@@ -6,7 +6,12 @@ BIG SHOUTOUT TO [TechnoTim](https://github.com/timothystewart6) who made this po
 
 ## Instructions/notes
 
-Here: 
+- Clone this repo
+- cd into the cloned repo
+- run `./repo-init.sh` to create an inventory and vars file
+- edit inventory/my-cluster/hosts.ini and change the ip to your single node's ip.
+- edit inventory/my-cluster/group_vars/all.yml and change the appropriate settings as the comments outline
+- run .deploy.sh to fire it off
 
 ## MetalLB
 
@@ -15,5 +20,3 @@ see <https://metallb.universe.tf/installation/>
 ## Links
 
 Techno-Tim's video on his playbook this is based on: <https://www.youtube.com/watch?v=CbkEWcUZ7zM>
-
-Kube-vip Control Plane is described -> <https://kube-vip.io/control-plane/>

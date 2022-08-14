@@ -13,7 +13,7 @@
   args:
     warn: false  # The ansible systemd module does not support reset-failed
 
-- name: Create manifests directory on first master
+- name: Create manifests directory
   file:
     path: /var/lib/rancher/k3s/server/manifests
     state: directory
@@ -22,25 +22,7 @@
     mode: 0644
   when: ansible_host == hostvars[groups['master'][0]]['ansible_host'] | default(groups['master'][0])
 
-- name: Copy vip rbac manifest to first master
-  template:
-    src: "vip.rbac.yaml.j2"
-    dest: "/var/lib/rancher/k3s/server/manifests/vip.rbac.yaml"
-    owner: root
-    group: root
-    mode: 0644
-  when: ansible_host == hostvars[groups['master'][0]]['ansible_host'] | default(groups['master'][0])
-
-- name: Copy vip manifest to first master
-  template:
-    src: "vip.yaml.j2"
-    dest: "/var/lib/rancher/k3s/server/manifests/vip.yaml"
-    owner: root
-    group: root
-    mode: 0644
-  when: ansible_host == hostvars[groups['master'][0]]['ansible_host'] | default(groups['master'][0])
-
-- name: Copy metallb namespace manifest to first master
+- name: Copy metallb namespace manifest
   template:
     src: "metallb.namespace.j2"
     dest: "/var/lib/rancher/k3s/server/manifests/metallb.namespace.yaml"
@@ -49,7 +31,7 @@
     mode: 0644
   when: ansible_host == hostvars[groups['master'][0]]['ansible_host'] | default(groups['master'][0])
 
-- name: Copy metallb ConfigMap manifest to first master
+- name: Copy metallb ConfigMap manifest
   template:
     src: "metallb.ipaddresspool.j2"
     dest: "/var/lib/rancher/k3s/server/manifests/metallb.configmap.yaml"
@@ -58,7 +40,7 @@
     mode: 0644
   when: ansible_host == hostvars[groups['master'][0]]['ansible_host'] | default(groups['master'][0])
 
-- name: Copy metallb main manifest to first master
+- name: Copy metallb main manifest
   template:
     src: "metallb.yaml.j2"
     dest: "/var/lib/rancher/k3s/server/manifests/metallb.yaml"
@@ -67,7 +49,7 @@
     mode: 0644
   when: ansible_host == hostvars[groups['master'][0]]['ansible_host'] | default(groups['master'][0])
 
-- name: Init cluster inside the transient k3s-init service
+- name: Init k3s inside the transient k3s-init service
   command:
     cmd: "systemd-run -p RestartSec=2 \
                       -p Restart=on-failure \
@@ -79,7 +61,7 @@
 
 - name: Verification
   block:
-    - name: Verify that all nodes actually joined (check k3s-init.service if this fails)
+    - name: Verify that node is up (check k3s-init.service if this fails)
       command:
         cmd: k3s kubectl get nodes -l "node-role.kubernetes.io/master=true" -o=jsonpath="{.items[*].metadata.name}"
       register: nodes
@@ -114,29 +96,29 @@
   wait_for:
     path: /var/lib/rancher/k3s/server/node-token
 
-- name: Register node-token file access mode
-  stat:
-    path: /var/lib/rancher/k3s/server
-  register: p
+# - name: Register node-token file access mode
+#   stat:
+#     path: /var/lib/rancher/k3s/server
+#   register: p
 
-- name: Change file access node-token
-  file:
-    path: /var/lib/rancher/k3s/server
-    mode: "g+rx,o+rx"
+# - name: Change file access node-token
+#   file:
+#     path: /var/lib/rancher/k3s/server
+#     mode: "g+rx,o+rx"
 
-- name: Read node-token from master
-  slurp:
-    src: /var/lib/rancher/k3s/server/node-token
-  register: node_token
+# - name: Read node-token from master
+#   slurp:
+#     src: /var/lib/rancher/k3s/server/node-token
+#   register: node_token
 
-- name: Store Master node-token
-  set_fact:
-    token: "{{ node_token.content | b64decode | regex_replace('\n', '') }}"
+# - name: Store Master node-token
+#   set_fact:
+#     token: "{{ node_token.content | b64decode | regex_replace('\n', '') }}"
 
-- name: Restore node-token file access
-  file:
-    path: /var/lib/rancher/k3s/server
-    mode: "{{ p.stat.mode }}"
+# - name: Restore node-token file access
+#   file:
+#     path: /var/lib/rancher/k3s/server
+#     mode: "{{ p.stat.mode }}"
 
 - name: Create directory .kube
   file:
@@ -153,10 +135,10 @@
     owner: "{{ ansible_user }}"
     mode: "u=rw,g=,o="
 
-- name: Configure kubectl cluster to https://{{ apiserver_endpoint }}:6443
+- name: Configure kubectl cluster to https://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:6443
   command: >-
     k3s kubectl config set-cluster default
-      --server=https://{{ apiserver_endpoint }}:6443
+      --server=https://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:6443
       --kubeconfig ~{{ ansible_user }}/.kube/config
   changed_when: true
 
